@@ -110,4 +110,73 @@ Organizations often manage shared resources like classrooms and labs using manua
 
 4> Performance : 
 -> The system should handle multiple concurrent bookings without delay.
+<<<<<<< HEAD
 
+=======
+>>>>>>> a6759c1 (Update README.md to enhance project description, objectives, target users, functional and non-functional requirements for the Resource Management System.)
+
+
+## User Roles & Permissions : 
+
+Admin : Full control over the system
+- Manage users (create, edit, delete)
+- Manage resources, resource types, buildings, facilities
+- Schedule maintenance
+- Manage cupboards and shelves
+- View all reports and dashboards
+
+Approver / Manager : Responsible for authorizing bookings
+- Approve or reject resource booking requests
+- View booking reports
+- Monitor resource usage
+
+Employee / Staff : Can book resources but needs approval if required
+- Request bookings for resources
+- View own bookings
+- View resource availability and facilities
+
+Student : Can use resources for academic purposes
+- Request bookings for classrooms, labs, or auditoriums
+- View own bookings and available resources
+
+Maintenance Staff : Responsible for resource upkeep
+- Receive alerts for scheduled maintenance
+- Update maintenance status (pending/completed)
+
+## Use Case Identification : 
+
+User Registration & Login : 
+-> Users register or log in to the system.
+-> System authenticates and assigns role-based access.
+
+Resource Management : 
+-> Admin adds/updates/deletes resources and resource types.
+-> Admin assigns resources to buildings and floors.
+
+Facilities Management : 
+-> Admin manages additional facilities for resources.
+-> Users view facilities while booking.
+
+Booking Request : 
+-> Users request a resource by selecting date and time.
+-> System checks availability and prevents double bookings.
+
+Approval Workflow : 
+-> Booking requests for restricted resources are sent to Approver.
+-> Approver can approve or reject the request.
+-> Notifications sent to requester.
+
+Maintenance Management :
+-> Admin schedules maintenance activities.
+-> Maintenance staff gets alerts and updates status.
+
+Cupboard & Shelf Management : 
+-> Admin manages cupboards and shelves for resources.
+-> Track capacity and description for inventory purposes.
+
+Reports & Analytics : 
+-> Admin and Approver view resource usage, booking history, maintenance history, and monthly/yearly reports.
+
+Dashboard :
+-> Users see quick overview: total resources, bookings, pending approvals, and maintenance alerts.
+>>>>>>> 1b1b16a (Update README.md to add user roles, permissions, and use case identification for the Resource Management System)
