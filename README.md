@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 
-=======
 ## Project Name : Resource Managment System
 
 ## Technologies Used : Next.js, Prisma, MySQL, JavaScript / TypeScript, TailwindCSS
@@ -112,4 +110,4 @@ Organizations often manage shared resources like classrooms and labs using manua
 
 4> Performance : 
 -> The system should handle multiple concurrent bookings without delay.
->>>>>>> a6759c1 (Update README.md to enhance project description, objectives, target users, functional and non-functional requirements for the Resource Management System.)
+
