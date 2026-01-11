@@ -1,11 +1,9 @@
-"use client"
-
 import React from 'react'
 
 function Register() {
   return (
     <div>
-      register page
+      Register code here
     </div>
   )
 }

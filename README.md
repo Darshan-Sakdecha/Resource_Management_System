@@ -1,4 +1,3 @@
-
 ## Project Name : Resource Managment System
 
 ## Technologies Used : Next.js, Prisma, MySQL, JavaScript / TypeScript, TailwindCSS
@@ -11,16 +10,12 @@ Organizations often manage shared resources like classrooms and labs using manua
 
 ## Project Objectives :
 
--> To develop a centralized digital system for managing organizational resources efficiently.
--> To simplify and automate the resource booking and approval process.
--> To ensure proper utilization and timely maintenance of resources.
--> To provide transparency through real-time availability, reports, and dashboards.
--> To reduce manual work, paperwork, and booking conflicts.
+-> The Resource Management System (RMS) is a web-based application that centralizes booking, tracking, and maintenance of shared organizational resources (classrooms, labs, auditoriums, cupboards, etc.). It removes paper-based workflows and manual coordination by providing a single platform for users to search, request, approve, schedule maintenance, and report on resource usage.
 
 ## Target Users :
 
--> Students – To book classrooms, labs, or auditoriums for academic activities.
--> Approvers / Managers – To approve or reject booking requests and monitor usage.
+-> Students(Users) – To book classrooms, labs, or auditoriums for academic activities.
+-> Approvers(Admin) / Managers – To approve or reject booking requests and monitor usage.
 -> Maintenance Staff – To receive maintenance alerts and manage resource upkeep.
 -> System Administrators – To manage users, resources, buildings, and system settings.
 
@@ -59,7 +54,7 @@ Organizations often manage shared resources like classrooms and labs using manua
 -> The system shall support approval-based bookings.
 -> The system shall notify users upon booking approval or rejection.
 
-7> Approval Workflow : 
+7> Approval Workflow :
 -> The system shall forward booking requests to the designated approver.
 -> The system shall allow approvers to approve or reject bookings.
 -> The system shall record approval status and approver details.
@@ -85,7 +80,7 @@ Organizations often manage shared resources like classrooms and labs using manua
 -> Monthly and yearly usage summaries
 -> The system shall allow users to download reports.
 
-11> Dashboard : 
+11> Dashboard :
 -> The system shall display a dashboard showing:
 -> Total resources and bookings
 -> Upcoming bookings
@@ -93,32 +88,32 @@ Organizations often manage shared resources like classrooms and labs using manua
 -> Maintenance alerts
 -> Usage charts
 
+## Non-Functional Requirements :
 
-## Non-Functional Requirements : 
-
-1> Security : 
+1> Security :
 -> User passwords shall be encrypted.
 -> The system shall implement role-based authorization.
 -> Only authorized users shall access approval and admin features.
 -> Sensitive data shall be protected from unauthorized access.
 
-2> Maintainability : 
+2> Maintainability :
 -> Easy to update, fix bugs, or add new features using Next.js and Prisma.
 
-3> Usability : 
+3> Usability :
 -> User-friendly interface accessible via web browser.
 
-4> Performance : 
+4> Performance :
 -> The system should handle multiple concurrent bookings without delay.
 <<<<<<< HEAD
 
 =======
->>>>>>> a6759c1 (Update README.md to enhance project description, objectives, target users, functional and non-functional requirements for the Resource Management System.)
 
+> > > > > > > a6759c1 (Update README.md to enhance project description, objectives, target users, functional and non-functional requirements for the Resource Management System.)
 
-## User Roles & Permissions : 
+## User Roles & Permissions :
 
 Admin : Full control over the system
+
 - Manage users (create, edit, delete)
 - Manage resources, resource types, buildings, facilities
 - Schedule maintenance
@@ -126,42 +121,46 @@ Admin : Full control over the system
 - View all reports and dashboards
 
 Approver / Manager : Responsible for authorizing bookings
+
 - Approve or reject resource booking requests
 - View booking reports
 - Monitor resource usage
 
 Employee / Staff : Can book resources but needs approval if required
+
 - Request bookings for resources
 - View own bookings
 - View resource availability and facilities
 
 Student : Can use resources for academic purposes
+
 - Request bookings for classrooms, labs, or auditoriums
 - View own bookings and available resources
 
 Maintenance Staff : Responsible for resource upkeep
+
 - Receive alerts for scheduled maintenance
 - Update maintenance status (pending/completed)
 
-## Use Case Identification : 
+## Use Case Identification :
 
-User Registration & Login : 
+User Registration & Login :
 -> Users register or log in to the system.
 -> System authenticates and assigns role-based access.
 
-Resource Management : 
+Resource Management :
 -> Admin adds/updates/deletes resources and resource types.
 -> Admin assigns resources to buildings and floors.
 
-Facilities Management : 
+Facilities Management :
 -> Admin manages additional facilities for resources.
 -> Users view facilities while booking.
 
-Booking Request : 
+Booking Request :
 -> Users request a resource by selecting date and time.
 -> System checks availability and prevents double bookings.
 
-Approval Workflow : 
+Approval Workflow :
 -> Booking requests for restricted resources are sent to Approver.
 -> Approver can approve or reject the request.
 -> Notifications sent to requester.
@@ -170,13 +169,14 @@ Maintenance Management :
 -> Admin schedules maintenance activities.
 -> Maintenance staff gets alerts and updates status.
 
-Cupboard & Shelf Management : 
+Cupboard & Shelf Management :
 -> Admin manages cupboards and shelves for resources.
 -> Track capacity and description for inventory purposes.
 
-Reports & Analytics : 
+Reports & Analytics :
 -> Admin and Approver view resource usage, booking history, maintenance history, and monthly/yearly reports.
 
 Dashboard :
 -> Users see quick overview: total resources, bookings, pending approvals, and maintenance alerts.
->>>>>>> 1b1b16a (Update README.md to add user roles, permissions, and use case identification for the Resource Management System)
+
+> > > > > > > 1b1b16a (Update README.md to add user roles, permissions, and use case identification for the Resource Management System)
