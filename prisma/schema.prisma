@@ -13,16 +13,16 @@ model bookings {
   user_id                           Int
   start_datetime                    DateTime        @db.DateTime(0)
   end_datetime                      DateTime        @db.DateTime(0)
-  status                            bookings_status
+  status                            bookings_status @default(pending)
   approver_id                       Int?
   created_at                        DateTime?       @default(now()) @db.DateTime(0)
-  resources                         resources       @relation(fields: [resource_id], references: [resource_id], onDelete: NoAction, onUpdate: NoAction, map: "bookings_ibfk_1")
-  users_bookings_user_idTousers     users           @relation("bookings_user_idTousers", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "bookings_ibfk_2")
   users_bookings_approver_idTousers users?          @relation("bookings_approver_idTousers", fields: [approver_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "bookings_ibfk_3")
+  resources                         resources       @relation(fields: [resource_id], references: [resource_id], onDelete: Cascade, onUpdate: NoAction, map: "bookings_ibfk_1")
+  users_bookings_user_idTousers     users           @relation("bookings_user_idTousers", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "bookings_ibfk_2")
 
-  @@index([approver_id], map: "approver_id")
-  @@index([resource_id], map: "resource_id")
-  @@index([user_id], map: "user_id")
+  @@index([approver_id], map: "idx_bookings_approver")
+  @@index([resource_id], map: "idx_bookings_resource")
+  @@index([user_id], map: "idx_bookings_user")
 }
 
 model buildings {
@@ -38,10 +38,10 @@ model cupboards {
   resource_id   Int
   cupboard_name String    @db.VarChar(100)
   total_shelves Int
-  resources     resources @relation(fields: [resource_id], references: [resource_id], onDelete: NoAction, onUpdate: NoAction, map: "cupboards_ibfk_1")
+  resources     resources @relation(fields: [resource_id], references: [resource_id], onDelete: Cascade, onUpdate: NoAction, map: "cupboards_ibfk_1")
   shelves       shelves[]
 
-  @@index([resource_id], map: "resource_id")
+  @@index([resource_id], map: "fk_cupboards_resource")
 }
 
 model facilities {
@@ -49,9 +49,9 @@ model facilities {
   resource_id   Int
   facility_name String    @db.VarChar(100)
   details       String?   @db.Text
-  resources     resources @relation(fields: [resource_id], references: [resource_id], onDelete: NoAction, onUpdate: NoAction, map: "facilities_ibfk_1")
+  resources     resources @relation(fields: [resource_id], references: [resource_id], onDelete: Cascade, onUpdate: NoAction, map: "facilities_ibfk_1")
 
-  @@index([resource_id], map: "resource_id")
+  @@index([resource_id], map: "fk_facilities_resource")
 }
 
 model maintenance {
@@ -61,9 +61,9 @@ model maintenance {
   scheduled_date   DateTime?          @db.Date
   status           maintenance_status
   notes            String?            @db.Text
-  resources        resources          @relation(fields: [resource_id], references: [resource_id], onDelete: NoAction, onUpdate: NoAction, map: "maintenance_ibfk_1")
+  resources        resources          @relation(fields: [resource_id], references: [resource_id], onDelete: Cascade, onUpdate: NoAction, map: "maintenance_ibfk_1")
 
-  @@index([resource_id], map: "resource_id")
+  @@index([resource_id], map: "fk_maintenance_resource")
 }
 
 model resource_types {
@@ -83,11 +83,11 @@ model resources {
   cupboards        cupboards[]
   facilities       facilities[]
   maintenance      maintenance[]
-  resource_types   resource_types @relation(fields: [resource_type_id], references: [resource_type_id], onDelete: NoAction, onUpdate: NoAction, map: "resources_ibfk_1")
-  buildings        buildings      @relation(fields: [building_id], references: [building_id], onDelete: NoAction, onUpdate: NoAction, map: "resources_ibfk_2")
+  buildings        buildings      @relation(fields: [building_id], references: [building_id], onDelete: Cascade, onUpdate: NoAction, map: "resources_ibfk_2")
+  resource_types   resource_types @relation(fields: [resource_type_id], references: [resource_type_id], onDelete: Cascade, onUpdate: NoAction, map: "resources_ibfk_1")
 
-  @@index([building_id], map: "building_id")
-  @@index([resource_type_id], map: "resource_type_id")
+  @@index([building_id], map: "idx_resources_building")
+  @@index([resource_type_id], map: "idx_resources_type")
 }
 
 model roles {
@@ -102,23 +102,23 @@ model shelves {
   shelf_number Int
   capacity     Int
   description  String?   @db.Text
-  cupboards    cupboards @relation(fields: [cupboard_id], references: [cupboard_id], onDelete: NoAction, onUpdate: NoAction, map: "shelves_ibfk_1")
+  cupboards    cupboards @relation(fields: [cupboard_id], references: [cupboard_id], onDelete: Cascade, onUpdate: NoAction, map: "shelves_ibfk_1")
 
-  @@index([cupboard_id], map: "cupboard_id")
+  @@index([cupboard_id], map: "fk_shelves_cupboard")
 }
 
 model users {
   user_id                              Int        @id @default(autoincrement())
   name                                 String     @db.VarChar(100)
   email                                String     @unique(map: "email") @db.VarChar(100)
-  role_id                              Int
+  role_id                              Int        @default(1)
   password                             String     @db.VarChar(255)
   created_at                           DateTime?  @default(now()) @db.DateTime(0)
-  bookings_bookings_user_idTousers     bookings[] @relation("bookings_user_idTousers")
   bookings_bookings_approver_idTousers bookings[] @relation("bookings_approver_idTousers")
+  bookings_bookings_user_idTousers     bookings[] @relation("bookings_user_idTousers")
   roles                                roles      @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
 
-  @@index([role_id], map: "role_id")
+  @@index([role_id], map: "idx_users_role")
 }
 
 enum maintenance_status {
