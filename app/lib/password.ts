@@ -1,12 +1,15 @@
 import bcrypt from "bcryptjs";
 
 export async function hashPassword(password: string) {
-  return await bcrypt.hash(password, 10);
+  return await bcrypt.hash(
+    password,
+    process.env.SALT_ROUNDS ? parseInt(process.env.SALT_ROUNDS) : 10,
+  );
 }
 
 export async function comparePassword(
   password: string,
-  hashedPassword: string
+  hashedPassword: string,
 ) {
   return await bcrypt.compare(password, hashedPassword);
 }

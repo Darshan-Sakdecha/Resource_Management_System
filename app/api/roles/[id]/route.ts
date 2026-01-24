@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { updateRoleSchema } from "@/app/schemas/role.schema";
 
 export async function PUT(
   req: Request,
@@ -7,19 +8,20 @@ export async function PUT(
 ) {
   try {
     const id = Number((await params).id);
-    const { role_name } = await req.json();
-    if (!role_name) {
-      return NextResponse.json(
-        { error: "role_name is required" },
-        { status: 400 },
-      );
+
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid role ID" }, { status: 400 });
     }
+
+    const body = await req.json();
+    const data = updateRoleSchema.parse(body);
+
     const updatedRole = await prisma.roles.update({
       where: {
         role_id: id,
       },
       data: {
-        role_name,
+        role_name: data.role_name,
       },
     });
     return NextResponse.json(updatedRole);
@@ -34,8 +36,12 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid role ID" }, { status: 400 });
+    }
+
     await prisma.roles.delete({
       where: {
         role_id: id,

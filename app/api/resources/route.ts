@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { createResourceSchema } from "@/app/schemas/resource.schema";
 
 export async function GET() {
   try {
@@ -26,33 +27,17 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const {
-      resource_name,
-      resource_type_id,
-      building_id,
-      floor_number,
-      description,
-    } = await req.json();
+    const body = await req.json();
 
-    if (
-      !resource_name ||
-      !resource_type_id ||
-      !building_id ||
-      floor_number === undefined
-    ) {
-      return NextResponse.json(
-        { error: "All required fields must be provided" },
-        { status: 400 },
-      );
-    }
+    const data = createResourceSchema.parse(body);
 
     const newResource = await prisma.resources.create({
       data: {
-        resource_name,
-        resource_type_id,
-        building_id,
-        floor_number,
-        description,
+        resource_name: data.resource_name,
+        resource_type_id: data.resource_type_id,
+        building_id: data.building_id,
+        floor_number: data.floor_number,
+        description: data.description,
       },
     });
 

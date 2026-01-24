@@ -1,6 +1,8 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { createUserSchema } from "@/app/schemas/user.schema";
+import { hashPassword } from "@/app/lib/password";
+
 export async function GET() {
   try {
     const users = await prisma.users.findMany({
@@ -19,29 +21,21 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role_id } = await req.json();
-    if (!name || !email || !password || !role_id) {
-      return NextResponse.json(
-        { error: "name, email, password and role_id are required" },
-        { status: 400 },
-      );
-    }
+    const body = await req.json();
 
-    const saltRounds = process.env.SALT_ROUNDS
-      ? parseInt(process.env.SALT_ROUNDS)
-      : 10; // You can adjust the number of salt rounds as needed
+    const data = createUserSchema.parse(body);
 
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await hashPassword(data.password);
 
     const newUser = await prisma.users.create({
       data: {
-        name,
-        email,
+        name: data.name,
+        email: data.email,
         password: hashedPassword,
-        role_id: Number(role_id),
+        role_id: data.role_id,
       },
     });
-    const { password: _, ...userSafe } = newUser;
+    const { password, ...userSafe } = newUser;
     return NextResponse.json(userSafe, { status: 201 });
   } catch (error: unknown) {
     let message = "Error creating user";

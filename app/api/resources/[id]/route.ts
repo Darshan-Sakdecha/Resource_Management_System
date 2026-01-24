@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { updateResourceSchema } from "@/app/schemas/resource.schema";
 
 export async function GET(
   req: Request,
@@ -7,6 +8,13 @@ export async function GET(
 ) {
   try {
     const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
+
     const resource = await prisma.resources.findUnique({
       where: {
         resource_id: id,
@@ -36,16 +44,24 @@ export async function PUT(
 ) {
   try {
     const id = Number((await params).id);
-    const { resource_name, resource_type_id, building_id, description } =
-      await req.json();
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
+
+    const body = await req.json();
+    const data = updateResourceSchema.parse(body);
 
     const updatedResource = await prisma.resources.update({
       where: { resource_id: id },
       data: {
-        resource_name,
-        resource_type_id,
-        building_id,
-        description,
+        resource_name: data.resource_name,
+        resource_type_id: data.resource_type_id,
+        building_id: data.building_id,
+        floor_number: data.floor_number,
+        description: data.description,
       },
     });
     return NextResponse.json(updatedResource);
@@ -65,6 +81,13 @@ export async function DELETE(
 ) {
   try {
     const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
+
     await prisma.resources.delete({
       where: { resource_id: id },
     });
