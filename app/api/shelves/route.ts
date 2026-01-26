@@ -1,8 +1,11 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET() {
   try {
+    await requireAuth(); // any logged-in user
     const shelve = await prisma.shelves.findMany({
       include: {
         cupboards: true, // linked cupboard
@@ -18,6 +21,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // restricted
     const { cupboard_id, shelf_number, capacity, description } =
       await req.json();
     if (!cupboard_id || !shelf_number || capacity == null) {

@@ -1,12 +1,17 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { updateRoleSchema } from "@/app/schemas/role.schema";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+     // Only Admin can update roles
+    await requireAuth([ROLES.ADMIN]);
+
     const id = Number((await params).id);
 
     if (isNaN(id)) {
@@ -37,6 +42,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    // Only Admin can delete roles
+    await requireAuth([ROLES.ADMIN]);
+    
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Invalid role ID" }, { status: 400 });

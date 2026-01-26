@@ -1,8 +1,13 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { createMaintenanceSchema } from "@/app/schemas/maintenance.schema";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
+
+// GET – any logged-in user
 export async function GET() {
   try {
+    await requireAuth(); // any logged-in user
     const maintenance = await prisma.maintenance.findMany({
       include: {
         resources: true, // linked resource
@@ -17,8 +22,11 @@ export async function GET() {
   }
 }
 
+// POST – Admin + Manager only
 export async function POST(req: Request) {
   try {
+    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // restricted
+    
     const body = await req.json();
     const data = createMaintenanceSchema.parse(body);
 

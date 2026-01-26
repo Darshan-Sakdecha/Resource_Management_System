@@ -2,9 +2,12 @@ import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { createUserSchema } from "@/app/schemas/user.schema";
 import { hashPassword } from "@/app/lib/password";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET() {
   try {
+    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // only Admin/Manager can view users
     const users = await prisma.users.findMany({
       include: {
         roles: true,
@@ -21,6 +24,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await requireAuth([ROLES.ADMIN]); // Only admin can create new users
     const body = await req.json();
 
     const data = createUserSchema.parse(body);

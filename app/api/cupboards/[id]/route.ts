@@ -1,12 +1,15 @@
 import { prisma } from "@/app/lib/prisma";
 import { updateCupboardSchema } from "@/app/schemas/cupboard.schema";
 import { NextResponse } from "next/server";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth(); // any logged-in user
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -38,6 +41,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // restrict update
+
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -70,6 +75,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth([ROLES.ADMIN]); // restrict delete
+    
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(

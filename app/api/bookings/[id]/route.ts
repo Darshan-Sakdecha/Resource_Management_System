@@ -4,12 +4,16 @@ import {
   updateBookingSchema,
   updateBookingStatusSchema,
 } from "@/app/schemas/booking.schema";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth(); // any logged-in user
+
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -43,6 +47,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const user = await requireAuth(); // logged-in user
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -59,6 +64,16 @@ export async function PUT(
     if (!existing) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
+
+    // Users can only edit their own pending bookings
+    if (
+      user.user_id !== existing.user_id &&
+      user.roles.role_name !== ROLES.ADMIN &&
+      user.roles.role_name !== ROLES.MANAGER
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (existing.status !== "pending") {
       return NextResponse.json(
         { error: "Cannot edit booking after approval/rejection" },
@@ -91,6 +106,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const user = await requireAuth([ROLES.MANAGER, ROLES.ADMIN]); // Only manager/admin can approve
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -108,7 +124,7 @@ export async function PATCH(
 
     const updatedBooking = await prisma.bookings.update({
       where: { booking_id: id },
-      data: { status, approver_id },
+      data: { status, approver_id: user.user_id },
       include: {
         resources: true,
         users_bookings_user_idTousers: true,
@@ -130,12 +146,28 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const user = await requireAuth(); // logged-in user
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Invalid booking ID" },
         { status: 400 },
       );
+    }
+
+    const existing = await prisma.bookings.findUnique({
+      where: { booking_id: id },
+    });
+    if (!existing)
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+
+    // Users can only cancel their own pending bookings
+    if (
+      user.user_id !== existing.user_id &&
+      user.roles.role_name !== ROLES.ADMIN &&
+      user.roles.role_name !== ROLES.MANAGER
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const deletedBooking = await prisma.bookings.delete({

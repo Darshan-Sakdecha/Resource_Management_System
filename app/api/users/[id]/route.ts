@@ -2,6 +2,8 @@ import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { updateUserSchema } from "@/app/schemas/user.schema";
 import { hashPassword } from "@/app/lib/password";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET(
   req: Request,
@@ -9,7 +11,16 @@ export async function GET(
 ) {
   try {
     const id = Number((await params).id);
-    const user = await prisma.users.findUnique({
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+    const user = await requireAuth([ROLES.ADMIN, ROLES.MANAGER, ROLES.USER]);
+
+    // Only ADMIN/MANAGER can view other users; USER can view only themselves
+    if (user.roles.role_name === ROLES.USER && user.user_id !== id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const User = await prisma.users.findUnique({
       where: {
         user_id: Number(id),
       },
@@ -17,10 +28,10 @@ export async function GET(
         roles: true,
       },
     });
-    if (!user) {
+    if (!User) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    const { password, ...userSafe } = user;
+    const { password, ...userSafe } = User;
     return NextResponse.json(userSafe);
   } catch (error: unknown) {
     let message = "Error fetching user";
@@ -37,6 +48,19 @@ export async function PUT(
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+    const currentUser = await requireAuth([
+      ROLES.ADMIN,
+      ROLES.MANAGER,
+      ROLES.USER,
+    ]);
+
+    // Only ADMIN/MANAGER can update others; USER can update only themselves
+    if (
+      currentUser.roles.role_name === ROLES.USER &&
+      currentUser.user_id !== id
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const body = await req.json();
     const data = updateUserSchema.parse(body);
@@ -73,6 +97,19 @@ export async function PATCH(
     if (isNaN(id))
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
 
+    const currentUser = await requireAuth([
+      ROLES.ADMIN,
+      ROLES.MANAGER,
+      ROLES.USER,
+    ]);
+
+    // USER can change only their own password
+    if (
+      currentUser.roles.role_name === ROLES.USER &&
+      currentUser.user_id !== id
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const { newPassword } = await req.json();
 
     if (!newPassword)
@@ -104,7 +141,13 @@ export async function DELETE(
     if (isNaN(id)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
-    
+
+    const currentUser = await requireAuth([ROLES.ADMIN, ROLES.MANAGER]);
+
+    // Only ADMIN can delete users
+    if (currentUser.roles.role_name !== ROLES.ADMIN) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     await prisma.users.delete({
       where: {
         user_id: id,

@@ -1,9 +1,12 @@
 import { prisma } from "@/app/lib/prisma";
 import { createResourceTypeSchema } from "@/app/schemas/resource-type.schema";
 import { NextResponse } from "next/server";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET() {
   try {
+    await requireAuth(); // any logged-in user
     const resourceTypes = await prisma.resource_types.findMany();
     return NextResponse.json(resourceTypes);
   } catch (error: unknown) {
@@ -16,8 +19,10 @@ export async function GET() {
   }
 }
 
+// POST – only Admin can create new resource types
 export async function POST(req: Request) {
   try {
+    await requireAuth([ROLES.ADMIN]);
     const body = await req.json();
     const data = createResourceTypeSchema.parse(body);
     

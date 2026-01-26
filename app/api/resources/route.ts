@@ -1,9 +1,12 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { createResourceSchema } from "@/app/schemas/resource.schema";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET() {
   try {
+    await requireAuth(); // any logged-in user
     const resources = await prisma.resource_types.findMany({
       include: {
         resources: {
@@ -27,6 +30,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // only Admin/Manager
     const body = await req.json();
 
     const data = createResourceSchema.parse(body);

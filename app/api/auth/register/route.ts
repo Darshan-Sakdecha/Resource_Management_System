@@ -1,10 +1,14 @@
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword } from "@/app/lib/password";
 import { NextResponse } from "next/server";
+import { registerSchema } from "@/app/schemas/auth.schema";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role_id } = await req.json();
+    const body = await req.json();
+    const data = registerSchema.parse(body);
+
+    const { name, email, password, role_id } = data;
 
     // Validate input
     if (!name || !email || !password || !role_id) {
@@ -35,14 +39,13 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        role_id,
+        role_id: role_id ?? 1, // default to 'User' role if not provided
       },
       select: {
         user_id: true,
         name: true,
         email: true,
         role_id: true,
-        created_at: true, // optional
       },
     });
 
@@ -53,12 +56,13 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
-  } catch (error) {
-    console.error("Registration error:", error);
+  } catch (error: unknown) {
+    let message = "Something went wrong at register time";
 
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 },
-    );
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

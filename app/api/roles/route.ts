@@ -1,9 +1,12 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { createRoleSchema } from "@/app/schemas/role.schema";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET() {
   try {
+    await requireAuth(); // Any logged-in user can view roles
     const roles = await prisma.roles.findMany();
     return NextResponse.json(roles);
   } catch (error: unknown) {
@@ -15,6 +18,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await requireAuth([ROLES.ADMIN]); // Only Admin can create roles
     const body = await req.json();
     const data = createRoleSchema.parse(body);
 

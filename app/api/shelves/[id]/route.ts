@@ -1,11 +1,14 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import {ROLES} from "@/app/lib/roles";
+import {requireAuth} from "@/app/lib/auth";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth(); // any logged-in user
     const id = Number((await params).id);
     const shelve = await prisma.shelves.findUnique({
       where: {
@@ -30,6 +33,8 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // only Admin/Manager
+
   const id = Number((await params).id);
   const { cupboard_id, shelf_number, capacity, description } = await req.json();
   try {
@@ -56,6 +61,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // only Admin/Manager
   const id = Number((await params).id);
   try {
     await prisma.shelves.delete({

@@ -1,12 +1,15 @@
 import { prisma } from "@/app/lib/prisma";
 import { updateResourceTypeSchema } from "@/app/schemas/resource-type.schema";
 import { NextResponse } from "next/server";
+import { ROLES } from "@/app/lib/roles";
+import { requireAuth } from "@/app/lib/auth";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth(); // any logged-in user
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -39,11 +42,13 @@ export async function GET(
   }
 }
 
+// PUT – only Admin can update
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth([ROLES.ADMIN]); // restrict access
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -73,11 +78,14 @@ export async function PUT(
   }
 }
 
+// DELETE – only Admin can delete
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAuth([ROLES.ADMIN]); // restrict access
+
     const id = Number((await params).id);
     if (isNaN(id)) {
       return NextResponse.json(
