@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { updateFacilitySchema } from "@/app/schemas/facility.schema";
 
 export async function GET(
   req: Request,
@@ -7,6 +8,12 @@ export async function GET(
 ) {
   try {
     const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid facility ID" },
+        { status: 400 },
+      );
+    }
     const facilitie = await prisma.facilities.findUnique({
       where: {
         facility_id: id,
@@ -33,17 +40,24 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
-  const { facility_name, details, resource_id } = await req.json();
   try {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid facility ID" },
+        { status: 400 },
+      );
+    }
+    const body = await req.json();
+    const data = updateFacilitySchema.parse(body);
     const updatedFacility = await prisma.facilities.update({
       where: {
         facility_id: id,
       },
       data: {
-        facility_name,
-        details,
-        resource_id,
+        facility_name: data.facility_name,
+        details: data.details,
+        resource_id: data.resource_id,
       },
     });
     return NextResponse.json(updatedFacility);
@@ -61,14 +75,20 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
-    await prisma.facilities.delete({
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid facility ID" },
+        { status: 400 },
+      );
+    }
+    const deletedFacility = await prisma.facilities.delete({
       where: {
         facility_id: id,
       },
     });
-    return NextResponse.json({ message: "Facility deleted successfully" });
+    return NextResponse.json(deletedFacility);
   } catch (error: unknown) {
     let message = "Something went wrong while deleting facility";
 
@@ -78,4 +98,3 @@ export async function DELETE(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

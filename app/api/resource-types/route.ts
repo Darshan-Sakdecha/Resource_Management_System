@@ -1,5 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
-import { error } from "console";
+import { createResourceTypeSchema } from "@/app/schemas/resource-type.schema";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -18,19 +18,11 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { type_name } = await req.json();
-    if (!type_name) {
-      return NextResponse.json(
-        {
-          error: "Type name is required",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
+    const body = await req.json();
+    const data = createResourceTypeSchema.parse(body);
+    
     const newType = await prisma.resource_types.create({
-      data: { type_name },
+      data: { type_name: data.type_name },
     });
 
     return NextResponse.json(newType, { status: 201 });

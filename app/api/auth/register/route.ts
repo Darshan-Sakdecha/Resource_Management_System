@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     if (!name || !email || !password || !role_id) {
       return NextResponse.json(
         { message: "All fields are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     if (existingUser) {
       return NextResponse.json(
         { message: "Email already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,14 +51,14 @@ export async function POST(req: Request) {
         message: "User registered successfully",
         user,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Registration error:", error);
 
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

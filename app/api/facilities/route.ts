@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { createFacilitySchema } from "@/app/schemas/facility.schema";
 
 export async function GET() {
   try {
@@ -16,21 +17,15 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { facility_name, details, resource_id } = await req.json();
-
   try {
-    if (!facility_name || !details || !resource_id) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 },
-      );
-    }
+    const body = await req.json();
+    const data = createFacilitySchema.parse(body);
 
     const newFacility = await prisma.facilities.create({
       data: {
-        facility_name,
-        details,
-        resource_id,
+        facility_name: data.facility_name,
+        details: data.details,
+        resource_id: data.resource_id,
       },
     });
     return NextResponse.json(newFacility, { status: 201 });

@@ -1,5 +1,9 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import {
+  updateBookingSchema,
+  updateBookingStatusSchema,
+} from "@/app/schemas/booking.schema";
 
 export async function GET(
   req: Request,
@@ -7,6 +11,12 @@ export async function GET(
 ) {
   try {
     const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid booking ID" },
+        { status: 400 },
+      );
+    }
     const booking = await prisma.bookings.findUnique({
       where: {
         booking_id: id,
@@ -32,16 +42,16 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
-  const { resource_id, user_id, start_datetime, end_datetime } =
-    await req.json();
   try {
-    if (!resource_id || !user_id || !start_datetime || !end_datetime) {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "Invalid booking ID" },
         { status: 400 },
       );
     }
+    const body = await req.json();
+    const data = updateBookingSchema.parse(body);
     // Optional: check if booking is already approved/rejected
     const existing = await prisma.bookings.findUnique({
       where: { booking_id: id },
@@ -59,10 +69,10 @@ export async function PUT(
     const updatedBooking = await prisma.bookings.update({
       where: { booking_id: id },
       data: {
-        resource_id,
-        user_id,
-        start_datetime: new Date(start_datetime),
-        end_datetime: new Date(end_datetime),
+        resource_id: data.resource_id,
+        user_id: data.user_id,
+        start_datetime: new Date(data.start_datetime),
+        end_datetime: new Date(data.end_datetime),
       },
       include: {
         resources: true,
@@ -89,7 +99,8 @@ export async function PATCH(
       );
     }
 
-    const { status, approver_id } = await req.json();
+    const body = await req.json();
+    const { status, approver_id } = updateBookingStatusSchema.parse(body);
 
     if (!["approved", "rejected"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -127,8 +138,10 @@ export async function DELETE(
       );
     }
 
-    await prisma.bookings.delete({ where: { booking_id: id } });
-    return NextResponse.json({ message: "Booking canceled successfully" });
+    const deletedBooking = await prisma.bookings.delete({
+      where: { booking_id: id },
+    });
+    return NextResponse.json(deletedBooking);
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Error deleting booking";

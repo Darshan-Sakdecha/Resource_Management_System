@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { createBookingSchema } from "@/app/schemas/booking.schema";
 
 export async function GET() {
   try {
@@ -21,22 +22,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { resource_id, user_id, start_datetime, end_datetime } =
-      await req.json();
-
-    if (!resource_id || !user_id || !start_datetime || !end_datetime) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 },
-      );
-    }
+    const body = await req.json();
+    const data = createBookingSchema.parse(body);
 
     const booking = await prisma.bookings.create({
       data: {
-        resource_id,
-        user_id,
-        start_datetime: new Date(start_datetime),
-        end_datetime: new Date(end_datetime),
+        resource_id: data.resource_id,
+        user_id: data.user_id,
+        start_datetime: new Date(data.start_datetime),
+        end_datetime: new Date(data.end_datetime),
         // status → pending (default)
         // approver_id → NULL
       },

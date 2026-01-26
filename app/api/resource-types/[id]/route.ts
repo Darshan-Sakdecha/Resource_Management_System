@@ -1,13 +1,19 @@
 import { prisma } from "@/app/lib/prisma";
-import { error } from "console";
+import { updateResourceTypeSchema } from "@/app/schemas/resource-type.schema";
 import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
     const resource_type = await prisma.resource_types.findUnique({
       where: {
         resource_type_id: id,
@@ -37,24 +43,23 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
-  const { type_name } = await req.json();
   try {
-    if (!type_name) {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
       return NextResponse.json(
-        {
-          error: "Resource Type name is required",
-        },
+        { error: "Invalid resource ID" },
         { status: 400 },
       );
     }
+    const body = await req.json();
+    const data = updateResourceTypeSchema.parse(body);
 
     const updateResourceType = await prisma.resource_types.update({
       where: {
         resource_type_id: id,
       },
       data: {
-        type_name,
+        type_name: data.type_name,
       },
     });
     return NextResponse.json(updateResourceType);
@@ -72,8 +77,14 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
     const deletedResourceType = await prisma.resource_types.delete({
       where: {
         resource_type_id: id,

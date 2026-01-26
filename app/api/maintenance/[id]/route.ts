@@ -1,12 +1,19 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+import { updateMaintenanceSchema } from "@/app/schemas/maintenance.schema";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
     const maintenance = await prisma.maintenance.findUnique({
       where: { maintenance_id: id },
       include: {
@@ -33,26 +40,27 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
-    const { resource_id, maintenance_type, scheduled_date, status, notes } =
-      await req.json();
-
-    if (!resource_id || !maintenance_type || !status) {
+    const id = Number((await params).id);
+    if (isNaN(id)) {
       return NextResponse.json(
-        { error: "resource_id, maintenance_type and status are required" },
+        { error: "Invalid resource ID" },
         { status: 400 },
       );
     }
+    const body = await req.json();
+    const data = updateMaintenanceSchema.parse(body);
 
     const updatedMaintenance = await prisma.maintenance.update({
       where: { maintenance_id: id },
       data: {
-        resource_id: Number(resource_id),
-        maintenance_type,
-        scheduled_date: scheduled_date ? new Date(scheduled_date) : null,
-        status,
-        notes,
+        resource_id: Number(data.resource_id),
+        maintenance_type: data.maintenance_type,
+        scheduled_date: data.scheduled_date
+          ? new Date(data.scheduled_date)
+          : null,
+        status: data.status,
+        notes: data.notes || null,
       },
     });
 
@@ -68,12 +76,18 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = Number((await params).id);
   try {
-    await prisma.maintenance.delete({
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid resource ID" },
+        { status: 400 },
+      );
+    }
+    const deletedMaintenance = await prisma.maintenance.delete({
       where: { maintenance_id: id },
     });
-    return NextResponse.json({ message: "Maintenance record deleted" });
+    return NextResponse.json(deletedMaintenance);
   } catch (error: unknown) {
     let message = "Error deleting maintenance record";
     if (error instanceof Error) message = error.message;
