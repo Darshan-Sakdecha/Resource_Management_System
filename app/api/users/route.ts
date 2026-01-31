@@ -5,19 +5,61 @@ import { hashPassword } from "@/app/lib/password";
 import { ROLES } from "@/app/lib/roles";
 import { requireAuth } from "@/app/lib/auth";
 
-export async function GET() {
+const ALLOWED_SORT_FIELDS = ["name", "email", "role_id", "created_at"] as const;
+
+export async function GET(req: Request) {
   try {
-    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // only Admin/Manager can view users
-    const users = await prisma.users.findMany({
-      include: {
-        roles: true,
+    await requireAuth([ROLES.ADMIN, ROLES.MANAGER]); // only Admin/Manager can view
+
+    const { searchParams } = new URL(req.url);
+
+    const page = Math.max(Number(searchParams.get("page")) || 1, 1);
+    const pageSize = Math.min(Number(searchParams.get("pageSize")) || 10, 50);
+    const skip = (page - 1) * pageSize;
+
+
+    const sortBy = searchParams.get("sortBy") || "name";
+    const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc";
+    const safeSortBy = ALLOWED_SORT_FIELDS.includes(sortBy as any)
+      ? sortBy
+      : "name";
+
+    const search = searchParams.get("search")?.trim();
+    const where = search
+      ? {
+          OR: [{ name: { contains: search } }, { email: { contains: search } }],
+        }
+      : {};
+
+
+    const [users, totalItems] = await Promise.all([
+      prisma.users.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { [safeSortBy]: sortOrder },
+        include: {
+          roles: true,
+        },
+      }),
+      prisma.users.count({ where }),
+    ]);
+
+    /* Remove passwords before sending response */
+    const usersSafe = users.map(({ password, ...rest }) => rest);
+
+    return NextResponse.json({
+      data: usersSafe,
+      pagination: {
+        totalItems,
+        totalPages: Math.ceil(totalItems / pageSize),
+        currentPage: page,
+        pageSize,
       },
     });
-    const usersSafe = users.map(({ password, ...rest }) => rest);
-    return NextResponse.json(usersSafe);
   } catch (error: unknown) {
-    let message = "Error fetching users";
-    if (error instanceof Error) message = error.message;
+    const message =
+      error instanceof Error ? error.message : "Error fetching users";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

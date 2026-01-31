@@ -2,20 +2,86 @@ import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 import { ROLES } from "@/app/lib/roles";
 import { requireAuth } from "@/app/lib/auth";
+import { Prisma } from "@/app/generated/prisma/client";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await requireAuth(); // any logged-in user
-    const shelve = await prisma.shelves.findMany({
-      include: {
-        cupboards: true, // linked cupboard
+
+    const { searchParams } = new URL(req.url);
+
+    const page = Math.max(Number(searchParams.get("page")) || 1, 1);
+    const pageSize = Math.min(Number(searchParams.get("pageSize")) || 10, 50);
+    const skip = (page - 1) * pageSize;
+
+    const search = searchParams.get("search")?.trim() || "";
+    const sortBy = searchParams.get("sortBy") || "shelf_number";
+    const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc";
+
+    const sortableFields = [
+      "shelf_id",
+      "shelf_number",
+      "capacity",
+      "cupboard_id",
+    ];
+
+    const safeSortBy = sortableFields.includes(sortBy)
+      ? sortBy
+      : "shelf_number";
+
+    const where: Prisma.shelvesWhereInput = search
+      ? {
+          OR: [
+            {
+              shelf_number: {
+                equals: Number(search) || undefined,
+              },
+            },
+            {
+              description: {
+                contains: search,
+              },
+            },
+            {
+              cupboards: {
+                cupboard_name: {
+                  contains: search,
+                },
+              },
+            },
+          ],
+        }
+      : {};
+
+    const [shelves, totalItems] = await Promise.all([
+      prisma.shelves.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: {
+          [safeSortBy]: sortOrder,
+        },
+        include: {
+          cupboards: true,
+        },
+      }),
+      prisma.shelves.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      data: shelves,
+      pagination: {
+        totalItems,
+        totalPages: Math.ceil(totalItems / pageSize),
+        currentPage: page,
+        pageSize,
       },
     });
-    return NextResponse.json(shelve);
-  } catch (error: unknown) {
-    let message = "Error fetching cupboards";
-    if (error instanceof Error) message = error.message;
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch shelves" },
+      { status: 500 },
+    );
   }
 }
 

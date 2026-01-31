@@ -3,28 +3,95 @@ import { NextResponse } from "next/server";
 import { createResourceSchema } from "@/app/schemas/resource.schema";
 import { ROLES } from "@/app/lib/roles";
 import { requireAuth } from "@/app/lib/auth";
+import { Prisma } from "@/app/generated/prisma/client";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await requireAuth(); // any logged-in user
-    const resources = await prisma.resource_types.findMany({
-      include: {
-        resources: {
-          include: {
-            buildings: true,
-            resource_types: true,
-          },
+
+    const { searchParams } = new URL(req.url);
+
+    const page = Math.max(Number(searchParams.get("page")) || 1, 1);
+    const pageSize = Math.min(Number(searchParams.get("pageSize")) || 10, 50);
+    const skip = (page - 1) * pageSize;
+
+    const search = searchParams.get("search")?.trim() || "";
+    const sortBy = searchParams.get("sortBy") || "resource_name";
+    const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc";
+
+    const sortableFields = [
+      "resource_id",
+      "resource_name",
+      "floor_number",
+      "building_id",
+      "resource_type_id",
+    ];
+
+    const safeSortBy = sortableFields.includes(sortBy)
+      ? sortBy
+      : "resource_name";
+
+    const where: Prisma.resourcesWhereInput = search
+      ? {
+          OR: [
+            {
+              resource_name: {
+                contains: search,
+              },
+            },
+            {
+              description: {
+                contains: search,
+              },
+            },
+            {
+              buildings: {
+                building_name: {
+                  contains: search,
+                },
+              },
+            },
+            {
+              resource_types: {
+                type_name: {
+                  contains: search,
+                },
+              },
+            },
+          ],
+        }
+      : {};
+
+    const [resources, totalItems] = await Promise.all([
+      prisma.resources.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: {
+          [safeSortBy]: sortOrder,
         },
+        include: {
+          buildings: true,
+          resource_types: true,
+        },
+      }),
+      prisma.resources.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      data: resources,
+      pagination: {
+        totalItems,
+        totalPages: Math.ceil(totalItems / pageSize),
+        currentPage: page,
+        pageSize,
       },
     });
-    return NextResponse.json(resources);
-  } catch (error: unknown) {
-    let message = "Something went at resource getAll time wrong";
-
-    if (error instanceof Error) {
-      message = error.message;
-    }
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch resources" },
+      { status: 500 },
+    );
   }
 }
 
