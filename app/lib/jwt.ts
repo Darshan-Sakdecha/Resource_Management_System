@@ -1,11 +1,10 @@
 import jwt from "jsonwebtoken";
-import { Role } from "./roles";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export type JwtPayload = {
   userId: number;
-  role: Role;
+  role: string;
 };
 
 export function signToken(payload: JwtPayload) {
