@@ -9,3 +9,10 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 export function isValidRole(role: string): role is Role {
   return Object.values(ROLES).includes(role as Role);
 }
+
+export function hasRole(
+  role: Role,
+  allowed: readonly Role[],
+): boolean {
+  return allowed.includes(role);
+}

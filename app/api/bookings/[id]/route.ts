@@ -68,8 +68,8 @@ export async function PUT(
     // Users can only edit their own pending bookings
     if (
       user.user_id !== existing.user_id &&
-      user.roles.role_name !== ROLES.ADMIN &&
-      user.roles.role_name !== ROLES.MANAGER
+      user.role !== ROLES.ADMIN &&
+      user.role !== ROLES.MANAGER
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -164,8 +164,8 @@ export async function DELETE(
     // Users can only cancel their own pending bookings
     if (
       user.user_id !== existing.user_id &&
-      user.roles.role_name !== ROLES.ADMIN &&
-      user.roles.role_name !== ROLES.MANAGER
+      user.role !== ROLES.ADMIN &&
+      user.role !== ROLES.MANAGER
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

@@ -8,10 +8,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = registerSchema.parse(body);
 
-    const { name, email, password, role_id } = data;
+    const { name, email, password } = data; // remove role_id from client input
 
     // Validate input
-    if (!name || !email || !password || !role_id) {
+    if (!name || !email || !password) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 },
@@ -33,13 +33,13 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user with role = User (role_id = 1)
     const user = await prisma.users.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role_id: role_id ?? 1, // default to 'User' role if not provided
+        role_id: 1, // always User
       },
       select: {
         user_id: true,
@@ -58,10 +58,7 @@ export async function POST(req: Request) {
     );
   } catch (error: unknown) {
     let message = "Something went wrong at register time";
-
-    if (error instanceof Error) {
-      message = error.message;
-    }
+    if (error instanceof Error) message = error.message;
 
     return NextResponse.json({ error: message }, { status: 500 });
   }

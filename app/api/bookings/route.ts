@@ -115,8 +115,7 @@ export async function POST(req: Request) {
     const data = createBookingSchema.parse(body);
 
     // Users can only create bookings for themselves
-    const userId =
-      user.roles.role_name === ROLES.USER ? user.user_id : data.user_id;
+    const userId = user.role === ROLES.USER ? user.user_id : data.user_id;
 
     const booking = await prisma.bookings.create({
       data: {

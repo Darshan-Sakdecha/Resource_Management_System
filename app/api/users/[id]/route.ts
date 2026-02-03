@@ -17,7 +17,7 @@ export async function GET(
     const user = await requireAuth([ROLES.ADMIN, ROLES.MANAGER, ROLES.USER]);
 
     // Only ADMIN/MANAGER can view other users; USER can view only themselves
-    if (user.roles.role_name === ROLES.USER && user.user_id !== id) {
+    if (user.role === ROLES.USER && user.user_id !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const User = await prisma.users.findUnique({
@@ -56,10 +56,7 @@ export async function PUT(
     ]);
 
     // Only ADMIN/MANAGER can update others; USER can update only themselves
-    if (
-      currentUser.roles.role_name === ROLES.USER &&
-      currentUser.user_id !== id
-    ) {
+    if (currentUser.role === ROLES.USER && currentUser.user_id !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const body = await req.json();
@@ -104,10 +101,7 @@ export async function PATCH(
     ]);
 
     // USER can change only their own password
-    if (
-      currentUser.roles.role_name === ROLES.USER &&
-      currentUser.user_id !== id
-    ) {
+    if (currentUser.role === ROLES.USER && currentUser.user_id !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const { newPassword } = await req.json();
@@ -145,7 +139,7 @@ export async function DELETE(
     const currentUser = await requireAuth([ROLES.ADMIN, ROLES.MANAGER]);
 
     // Only ADMIN can delete users
-    if (currentUser.roles.role_name !== ROLES.ADMIN) {
+    if (currentUser.role !== ROLES.ADMIN) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     await prisma.users.delete({
