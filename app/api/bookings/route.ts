@@ -30,7 +30,7 @@ function buildBookingWhere(
 
   const where: Prisma.bookingsWhereInput = {};
 
-  if (user.roles.role_name === ROLES.USER) {
+  if (user.role === ROLES.USER) {
     where.user_id = user.user_id;
   }
 
@@ -41,17 +41,14 @@ function buildBookingWhere(
     ];
   }
 
-  // Status filter (ENUM-safe)
   if (status && Object.values($Enums.bookings_status).includes(status as any)) {
     where.status = status as $Enums.bookings_status;
   }
 
-  // Resource filter
   if (resourceId) {
     where.resource_id = Number(resourceId);
   }
 
-  // Date range filter
   if (fromDate || toDate) {
     where.start_datetime = {
       ...(fromDate && { gte: new Date(fromDate) }),
@@ -61,6 +58,7 @@ function buildBookingWhere(
 
   return where;
 }
+
 
 export async function GET(req: Request) {
   try {
