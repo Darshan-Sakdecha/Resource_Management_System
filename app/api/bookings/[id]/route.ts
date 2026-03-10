@@ -97,7 +97,11 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedBooking);
-  } catch (error) {}
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Error updating booking";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 // PATCH – update only status / approver_id

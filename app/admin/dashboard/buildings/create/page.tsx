@@ -3,135 +3,141 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import { Calendar } from "lucide-react";
 
-export default function CreateBuildingPage() {
+export default function CreateBookingPage() {
+
   const router = useRouter();
 
-  const [form, setForm] = useState({
-    building_name: "",
-    building_number: "",
-    total_floors: 1,
+  const [form,setForm] = useState({
+    user_id:"",
+    resource_id:"",
+    start_datetime:"",
+    end_datetime:"",
+    status:"scheduled"
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState<string|null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e:any)=>{
+    setForm({...form,[e.target.name]:e.target.value});
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async(e:any)=>{
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
-    try {
-      const res = await fetch("/api/buildings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          building_name: form.building_name,
-          building_number: form.building_number,
-          total_floors: Number(form.total_floors),
-        }),
+    try{
+
+      const res = await fetch("/api/bookings",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body:JSON.stringify({
+          user_id:Number(form.user_id),
+          resource_id:Number(form.resource_id),
+          start_datetime:form.start_datetime,
+          end_datetime:form.end_datetime,
+          status:form.status
+        })
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Something went wrong");
-      }
+      if(!res.ok) throw new Error(data.error);
 
-      router.push("/admin/dashboard/buildings");
-    } catch (err: any) {
+      router.push("/admin/dashboard/bookings");
+
+    }catch(err:any){
       setError(err.message);
-    } finally {
+    }finally{
       setLoading(false);
     }
+
   };
 
   return (
+
     <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
+
       <div className="w-full max-w-2xl bg-white shadow-md rounded-2xl p-8">
 
-        {/* Header with Back button */}
         <div className="flex justify-between items-center mb-6">
+
           <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <Building2 className="text-indigo-600" size={28} />
-            Create Building
+            <Calendar className="text-indigo-600" size={28}/>
+            Create Booking
           </h2>
+
           <button
-            onClick={() => router.push("/admin/dashboard/buildings")}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl transition"
+            onClick={()=>router.push("/admin/dashboard/bookings")}
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl"
           >
             ← Back
           </button>
+
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Building Name */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">
-              Building Name
-            </label>
-            <input
-              type="text"
-              name="building_name"
-              value={form.building_name}
-              onChange={handleChange}
-              placeholder="Corporate Tower"
-              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              required
-            />
-          </div>
+          <input
+            name="user_id"
+            placeholder="User ID"
+            value={form.user_id}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3"
+            required
+          />
 
-          {/* Building Number */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">
-              Building Number
-            </label>
-            <input
-              type="text"
-              name="building_number"
-              value={form.building_number}
-              onChange={handleChange}
-              placeholder="B-101"
-              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              required
-            />
-          </div>
+          <input
+            name="resource_id"
+            placeholder="Resource ID"
+            value={form.resource_id}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3"
+            required
+          />
 
-          {/* Total Floors */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">
-              Total Floors
-            </label>
-            <input
-              type="number"
-              name="total_floors"
-              value={form.total_floors}
-              onChange={handleChange}
-              min={1}
-              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              required
-            />
-          </div>
+          <input
+            type="datetime-local"
+            name="start_datetime"
+            value={form.start_datetime}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3"
+            required
+          />
 
-          {/* Action Buttons */}
+          <input
+            type="datetime-local"
+            name="end_datetime"
+            value={form.end_datetime}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3"
+            required
+          />
+
+          <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3"
+          >
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
           <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
+
             <Link
-              href="/admin/dashboard/buildings"
-              className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition font-medium"
+              href="/admin/dashboard/bookings"
+              className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               Cancel
             </Link>
@@ -139,13 +145,17 @@ export default function CreateBuildingPage() {
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
             >
-              {loading ? "Creating..." : "Create Building"}
+              {loading ? "Creating..." : "Create Booking"}
             </button>
+
           </div>
+
         </form>
+
       </div>
+
     </div>
   );
 }

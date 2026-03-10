@@ -3,60 +3,63 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Boxes } from "lucide-react";
+import { Wrench } from "lucide-react";
 
-export default function CreateResourcePage() {
+export default function CreateMaintenancePage() {
 
   const router = useRouter();
 
   const [form, setForm] = useState({
-    resource_name: "",
-    resource_type_id: "",
-    building_id: "",
-    floor_number: "",
-    description: "",
+    resource_id: 1,
+    maintenance_type: "",
+    scheduled_date: "",
+    status: "",
+    notes: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setLoading(true);
     setError(null);
 
     try {
-
-      const res = await fetch("/api/resources", {
+      const res = await fetch("/api/maintenance", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          resource_name: form.resource_name,
-          resource_type_id: Number(form.resource_type_id),
-          building_id: Number(form.building_id),
-          floor_number: Number(form.floor_number),
-          description: form.description
-        })
+          resource_id: Number(form.resource_id),
+          maintenance_type: form.maintenance_type,
+          scheduled_date: form.scheduled_date,
+          status: form.status,
+          notes: form.notes,
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create maintenance");
+      }
 
-      router.push("/admin/dashboard/resources");
+      router.push("/admin/dashboard/maintenance");
 
     } catch (err: any) {
       setError(err.message);
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
-
   };
 
   return (
@@ -66,12 +69,10 @@ export default function CreateResourcePage() {
 
         {/* HEADER */}
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6 text-white">
-
           <h2 className="text-xl font-semibold flex items-center gap-3">
-            <Boxes size={24} />
-            Create Resource
+            <Wrench size={24} />
+            Create Maintenance
           </h2>
-
         </div>
 
         {/* FORM */}
@@ -85,71 +86,75 @@ export default function CreateResourcePage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
 
+            {/* Resource ID */}
             <div>
               <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Resource Name
-              </label>
-              <input
-                name="resource_name"
-                value={form.resource_name}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Resource Type ID
+                Resource ID
               </label>
               <input
                 type="number"
-                name="resource_type_id"
-                value={form.resource_type_id}
+                name="resource_id"
+                value={form.resource_id}
                 onChange={handleChange}
                 required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none transition"
               />
             </div>
 
+            {/* Maintenance Type */}
             <div>
               <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Building ID
+                Maintenance Type
               </label>
               <input
-                type="number"
-                name="building_id"
-                value={form.building_id}
+                type="text"
+                name="maintenance_type"
+                value={form.maintenance_type}
                 onChange={handleChange}
                 required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none transition"
               />
             </div>
 
+            {/* Scheduled Date */}
             <div>
               <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Floor Number
+                Scheduled Date
               </label>
               <input
-                type="number"
-                name="floor_number"
-                value={form.floor_number}
+                type="date"
+                name="scheduled_date"
+                value={form.scheduled_date}
                 onChange={handleChange}
-                required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none transition"
               />
             </div>
 
+            {/* Status */}
             <div>
               <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Description
+                Status
+              </label>
+              <input
+                type="text"
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none transition"
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-indigo-700 mb-2">
+                Notes
               </label>
               <textarea
+                name="notes"
                 rows={4}
-                name="description"
-                value={form.description}
+                value={form.notes}
                 onChange={handleChange}
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none transition"
               />
             </div>
 
@@ -157,8 +162,8 @@ export default function CreateResourcePage() {
             <div className="flex justify-end gap-4 pt-4 border-t border-indigo-100">
 
               <Link
-                href="/admin/dashboard/resources"
-                className="px-6 py-3 rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                href="/admin/dashboard/maintenance"
+                className="px-6 py-3 rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50 transition font-medium"
               >
                 Cancel
               </Link>
@@ -168,7 +173,7 @@ export default function CreateResourcePage() {
                 disabled={loading}
                 className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-lg hover:bg-indigo-700 disabled:opacity-50"
               >
-                {loading ? "Creating..." : "Create Resource"}
+                {loading ? "Creating..." : "Create Maintenance"}
               </button>
 
             </div>

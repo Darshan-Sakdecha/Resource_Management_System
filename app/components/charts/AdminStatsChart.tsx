@@ -1,52 +1,51 @@
 "use client";
 
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
+  PieChart,
+  Pie,
+  Cell,
   Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
+  ResponsiveContainer,
+} from "recharts";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-);
+interface Props {
+  data: { status: string; count: number }[];
+}
 
-type ChartItem = {
-  status: string;
-  count: number;
-};
+const COLORS = ["#6366F1", "#22C55E", "#F59E0B", "#EF4444"];
 
-export default function AdminStatsChart({ data }: { data: ChartItem[] }) {
-  const chartData = {
-    labels: data.map(d => d.status),
-    datasets: [
-      {
-        label: "Bookings",
-        data: data.map(d => d.count),
-        backgroundColor: [
-          "#6366F1", // indigo
-          "#22C55E", // green
-          "#F59E0B", // amber
-          "#EF4444", // red
-        ],
-        borderRadius: 8,
-      },
-    ],
-  };
-
+export default function AdminStatsChart({ data }: Props) {
   return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        Booking Status Overview
-      </h3>
-      <Bar data={chartData} />
+    <div className="w-full h-[350px] bg-white rounded-xl shadow p-4">
+
+      {/* Prevent chart crash if data is empty */}
+      {data.length === 0 ? (
+        <div className="flex items-center justify-center h-full text-gray-500">
+          No booking data available
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="count"
+              nameKey="status"
+              outerRadius={110}
+              label
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
+
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+
     </div>
   );
 }

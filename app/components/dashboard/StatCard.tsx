@@ -1,13 +1,17 @@
+"use client";
+
 type StatCardProps = {
   title: string;
   value: number;
-  color?: "blue" | "green" | "purple";
+  color?: "blue" | "green" | "purple" | "yellow" | "pink";
 };
 
-const colorMap = {
-  blue: "bg-blue-50 text-blue-700 border-blue-200",
-  green: "bg-green-50 text-green-700 border-green-200",
-  purple: "bg-purple-50 text-purple-700 border-purple-200",
+const colorStyles = {
+  blue: "bg-blue-100 text-blue-700",
+  green: "bg-green-100 text-green-700",
+  purple: "bg-purple-100 text-purple-700",
+  yellow: "bg-yellow-100 text-yellow-700",
+  pink: "bg-pink-100 text-pink-700",
 };
 
 export default function StatCard({
@@ -16,13 +20,18 @@ export default function StatCard({
   color = "blue",
 }: StatCardProps) {
   return (
-    <div
-      className={`rounded-xl border p-5 shadow-sm ${colorMap[color]}`}
-    >
-      <p className="text-sm font-medium uppercase tracking-wide">
-        {title}
-      </p>
-      <p className="text-4xl font-bold mt-2">{value}</p>
+    <div className="bg-white border rounded-xl p-4 shadow-sm">
+      <p className="text-sm text-gray-500">{title}</p>
+
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-2xl font-bold">{value}</p>
+
+        <span
+          className={`px-3 py-1 text-sm rounded-full ${colorStyles[color]}`}
+        >
+          {title}
+        </span>
+      </div>
     </div>
   );
 }

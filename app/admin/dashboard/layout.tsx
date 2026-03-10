@@ -9,8 +9,13 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🔐 Protect ALL admin routes
+
+  // 🔐 Protect all admin dashboard routes
   await requireAuth([ROLES.ADMIN]);
 
-  return <AdminLayoutClient>{children}</AdminLayoutClient>;
+  return (
+    <AdminLayoutClient>
+      {children}
+    </AdminLayoutClient>
+  );
 }
