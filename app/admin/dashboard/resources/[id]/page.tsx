@@ -3,7 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { Edit2 } from "lucide-react";
+import { Edit2, ArrowLeft } from "lucide-react";
+
+interface ResourceType {
+  resource_type_id: number;
+  type_name: string;
+}
+
+interface Building {
+  building_id: number;
+  building_name: string;
+}
 
 export default function EditResourcePage() {
 
@@ -11,7 +21,10 @@ export default function EditResourcePage() {
   const params = useParams();
   const id = params?.id;
 
-  const [form, setForm] = useState<any>({
+  const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+
+  const [form, setForm] = useState({
     resource_name: "",
     resource_type_id: "",
     building_id: "",
@@ -20,40 +33,82 @@ export default function EditResourcePage() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  /* FETCH DATA */
 
   useEffect(() => {
 
     if (!id) return;
 
-    fetch(`/api/resources/${id}`)
-      .then(res => res.json())
-      .then(data => {
+    const fetchData = async () => {
+
+      try {
+
+        /* Resource Types */
+        const rtRes = await fetch("/api/resource-types");
+        const rtData = await rtRes.json();
+        const rtList = Array.isArray(rtData) ? rtData : rtData.data || [];
+        setResourceTypes(rtList);
+
+        /* Buildings */
+        const bRes = await fetch("/api/buildings");
+        const bData = await bRes.json();
+        const bList = Array.isArray(bData) ? bData : bData.data || [];
+        setBuildings(bList);
+
+        /* Resource */
+        const rRes = await fetch(`/api/resources/${id}`);
+        const rData = await rRes.json();
+
         setForm({
-          resource_name: data.resource_name,
-          resource_type_id: data.resource_type_id,
-          building_id: data.building_id,
-          floor_number: data.floor_number,
-          description: data.description ?? ""
-        })
-      });
+          resource_name: rData.resource_name || "",
+          resource_type_id: rData.resource_type_id?.toString() || "",
+          building_id: rData.building_id?.toString() || "",
+          floor_number: rData.floor_number?.toString() || "",
+          description: rData.description ?? ""
+        });
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+
+    };
+
+    fetchData();
 
   }, [id]);
 
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  /* HANDLE INPUT CHANGE */
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
   };
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  /* HANDLE SUBMIT */
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+
+    e.preventDefault();
     setLoading(true);
 
     try {
 
-      const res = await fetch(`/api/resources/${id}`, {
+      await fetch(`/api/resources/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           resource_name: form.resource_name,
           resource_type_id: Number(form.resource_type_id),
@@ -63,121 +118,148 @@ export default function EditResourcePage() {
         })
       });
 
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error);
-
       router.push("/admin/dashboard/resources");
 
-    } catch (err: any) {
-      setError(err.message);
-    }
-    finally {
+    } catch (error) {
+
+      console.error("Update failed:", error);
+
+    } finally {
+
       setLoading(false);
+
     }
 
   };
 
   return (
 
-    <div className="min-h-screen bg-indigo-50/40 p-6 flex justify-center items-start">
+    <div className="min-h-screen bg-indigo-50/40 p-6 flex justify-center">
 
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-indigo-100 overflow-hidden">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border">
 
         {/* HEADER */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6 text-white flex justify-between">
+
+        <div className="bg-indigo-600 text-white px-8 py-6 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
-            <Edit2 size={24} />
-            <h2 className="text-xl font-semibold">Edit Resource</h2>
+            <Edit2 />
+            <h2 className="text-lg font-semibold">Edit Resource</h2>
           </div>
 
-          <Link
-            href="/admin/dashboard/resources"
-            className="text-indigo-100 hover:text-white"
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 bg-white text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-100"
           >
+            <ArrowLeft size={16} />
             Back
-          </Link>
+          </button>
 
         </div>
 
-        <div className="p-10 space-y-6">
+        {/* FORM */}
 
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl">
-              {error}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="p-10 space-y-6">
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Resource Name */}
 
-            {/* Resource Name */}
-            <input
-              name="resource_name"
-              value={form.resource_name}
-              onChange={handleChange}
-              placeholder="Resource Name"
-              className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
+          <input
+            type="text"
+            name="resource_name"
+            value={form.resource_name}
+            onChange={handleChange}
+            placeholder="Resource Name"
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          />
 
-            {/* Resource Type */}
-            <input
-              name="resource_type_id"
-              value={form.resource_type_id}
-              onChange={handleChange}
-              placeholder="Resource Type ID"
-              className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
+          {/* Resource Type */}
 
-            {/* Building ID */}
-            <input
-              name="building_id"
-              value={form.building_id}
-              onChange={handleChange}
-              placeholder="Building ID"
-              className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
+          <select
+            name="resource_type_id"
+            value={form.resource_type_id}
+            onChange={handleChange}
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          >
 
-            {/* Floor Number */}
-            <input
-              name="floor_number"
-              value={form.floor_number}
-              onChange={handleChange}
-              placeholder="Floor Number"
-              className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
+            <option value="">Select Resource Type</option>
 
-            {/* Description */}
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Description"
-              className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-
-            <div className="flex justify-end gap-4">
-
-              <Link
-                href="/admin/dashboard/resources"
-                className="px-6 py-3 border border-indigo-200 rounded-xl text-indigo-700 hover:bg-indigo-50"
+            {resourceTypes.map((rt) => (
+              <option
+                key={rt.resource_type_id}
+                value={rt.resource_type_id}
               >
-                Cancel
-              </Link>
+                {rt.type_name}
+              </option>
+            ))}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+          </select>
+
+          {/* Building */}
+
+          <select
+            name="building_id"
+            value={form.building_id}
+            onChange={handleChange}
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          >
+
+            <option value="">Select Building</option>
+
+            {buildings.map((b) => (
+              <option
+                key={b.building_id}
+                value={b.building_id}
               >
-                {loading ? "Updating..." : "Update Resource"}
-              </button>
+                {b.building_name}
+              </option>
+            ))}
 
-            </div>
+          </select>
 
-          </form>
+          {/* Floor */}
 
-        </div>
+          <input
+            type="number"
+            name="floor_number"
+            value={form.floor_number}
+            onChange={handleChange}
+            placeholder="Floor Number"
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          />
+
+          {/* Description */}
+
+          <textarea
+            name="description"
+            rows={4}
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Description"
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          />
+
+          {/* BUTTONS */}
+
+          <div className="flex justify-end gap-4">
+
+            <Link
+              href="/admin/dashboard/resources"
+              className="border px-6 py-3 rounded-xl hover:bg-gray-50"
+            >
+              Cancel
+            </Link>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700"
+            >
+              {loading ? "Updating..." : "Update Resource"}
+            </button>
+
+          </div>
+
+        </form>
 
       </div>
 

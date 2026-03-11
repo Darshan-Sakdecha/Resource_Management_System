@@ -1,5 +1,3 @@
-// app/admin/dashboard/page.tsx
-
 import { requireAuth } from "@/app/lib/auth";
 import { ROLES } from "@/app/lib/roles";
 import { prisma } from "@/app/lib/prisma";
@@ -8,19 +6,30 @@ import StatCard from "@/app/components/dashboard/StatCard";
 import AdminStatsChart from "@/app/components/charts/AdminStatsChart";
 
 import Link from "next/link";
-import { Building2, Box, Calendar, Settings, Users } from "lucide-react";
+import {
+  Building2,
+  Box,
+  Calendar,
+  Settings,
+  Users,
+  Archive,
+  Layers,
+} from "lucide-react";
 
 export default async function AdminDashboard() {
-  // 🔐 Protect route (Admin only)
+  // Protect route (Admin only)
   await requireAuth([ROLES.ADMIN]);
 
-  // 📊 Fetch all statistics in parallel
+  // Fetch statistics in parallel
   const [
     totalUsers,
     totalResources,
     totalBookings,
     totalBuildings,
     totalFacilities,
+    totalShelves,
+    totalCupboards,
+    totalResourceTypes,
     bookingStats,
   ] = await Promise.all([
     prisma.users.count(),
@@ -28,76 +37,64 @@ export default async function AdminDashboard() {
     prisma.bookings.count(),
     prisma.buildings.count(),
     prisma.facilities.count(),
+    prisma.shelves.count(),
+    prisma.cupboards.count(),
+    prisma.resource_types.count(),
     prisma.bookings.groupBy({
       by: ["status"],
       _count: { status: true },
     }),
   ]);
 
-  // 📈 Prepare chart data
   const chartData = bookingStats.map((item) => ({
     status: item.status,
     count: item._count.status,
   }));
 
-  // 🧭 Dashboard navigation
   const dashboardLinks = [
+    { label: "Buildings", href: "/admin/dashboard/buildings", icon: Building2 },
+    { label: "Facilities", href: "/admin/dashboard/facilities", icon: Box },
+    { label: "Resources", href: "/admin/dashboard/resources", icon: Settings },
+    { label: "Bookings", href: "/admin/dashboard/bookings", icon: Calendar },
+    { label: "Users", href: "/admin/dashboard/users", icon: Users },
+    { label: "Cupboards", href: "/admin/dashboard/cupboards", icon: Layers },
+    { label: "Shelves", href: "/admin/dashboard/shelves", icon: Archive },
     {
-      label: "Buildings",
-      href: "/admin/dashboard/buildings",
-      icon: Building2,
-    },
-    {
-      label: "Facilities",
-      href: "/admin/dashboard/facilities",
-      icon: Box,
-    },
-    {
-      label: "Resources",
-      href: "/admin/dashboard/resources",
+      label: "Resource Types",
+      href: "/admin/dashboard/resource-types",
       icon: Settings,
-    },
-    {
-      label: "Bookings",
-      href: "/admin/dashboard/booking",
-      icon: Calendar,
-    },
-    {
-      label: "Users",
-      href: "/admin/dashboard/users",
-      icon: Users,
     },
   ];
 
   return (
     <div className="space-y-8">
-
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-blue-700">
-          Admin Dashboard
-        </h1>
+        <h1 className="text-3xl font-bold text-blue-700">Admin Dashboard</h1>
         <p className="text-gray-500">
           Overview of the Resource Management System
         </p>
       </div>
 
-      {/* KPI Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* KPI Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4">
         <StatCard title="Users" value={totalUsers} color="blue" />
         <StatCard title="Resources" value={totalResources} color="green" />
         <StatCard title="Bookings" value={totalBookings} color="purple" />
         <StatCard title="Buildings" value={totalBuildings} color="yellow" />
         <StatCard title="Facilities" value={totalFacilities} color="pink" />
+        <StatCard title="Shelves" value={totalShelves} color="blue" />
+        <StatCard title="Cupboards" value={totalCupboards} color="orange" />
+        <StatCard title="Resource Types" value={totalResourceTypes} color="teal" />
       </div>
 
-      {/* Navigation Section */}
+      {/* Module Navigation */}
       <div>
         <h2 className="text-xl font-semibold text-gray-700 mb-4">
           Manage Modules
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-4">
           {dashboardLinks.map((item) => {
             const Icon = item.icon;
 
@@ -120,7 +117,7 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Chart Section */}
+      {/* Booking Chart */}
       <div>
         <h2 className="text-xl font-semibold text-gray-700 mb-4">
           Booking Status Overview
@@ -130,7 +127,6 @@ export default async function AdminDashboard() {
           <AdminStatsChart data={chartData} />
         </div>
       </div>
-
     </div>
   );
 }

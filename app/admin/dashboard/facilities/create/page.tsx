@@ -1,159 +1,207 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 
+interface Resource {
+  resource_id: number;
+  resource_name: string;
+}
+
 export default function CreateFacilityPage() {
-    const router = useRouter();
 
-    const [form, setForm] = useState({
-        facility_name: "",
-        details: "",
-        resource_id: 1,
-    });
+  const router = useRouter();
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const [resources, setResources] = useState<Resource[]>([]);
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+  const [form, setForm] = useState({
+    facility_name: "",
+    details: "",
+    resource_id: ""
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch resources
+  useEffect(() => {
+
+    const fetchResources = async () => {
+      try {
+
+        const res = await fetch("/api/resources");
+        const data = await res.json();
+
+        // Ensure array
+        const resourceList = Array.isArray(data) ? data : data.data || [];
+
+        setResources(resourceList);
+
+      } catch {
+        setError("Failed to load resources");
+      }
     };
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
+    fetchResources();
 
-        try {
-            const res = await fetch("/api/facilities", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    facility_name: form.facility_name,
-                    details: form.details,
-                    resource_id: Number(form.resource_id),
-                }),
-            });
+  }, []);
 
-            const data = await res.json();
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-            if (!res.ok) {
-                throw new Error(data.error || "Something went wrong");
-            }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
-            router.push("/admin/dashboard/facilities");
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    e.preventDefault();
 
-    return (
-        <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
+    setLoading(true);
+    setError(null);
 
-            <div className="w-full max-w-2xl bg-white shadow-md rounded-2xl p-8">
+    try {
 
-                {/* Header */}
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-                        <PlusCircle className="text-indigo-600" size={28} />
-                        Create Facility
-                    </h2>
+      const res = await fetch("/api/facilities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          facility_name: form.facility_name,
+          details: form.details,
+          resource_id: Number(form.resource_id)
+        })
+      });
 
-                    <button
-                        onClick={() => router.push("/admin/dashboard/facilities")}
-                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl transition"
-                    >
-                        ← Back
-                    </button>
-                </div>
+      const data = await res.json();
 
-                {/* Error */}
-                {error && (
-                    <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
-                        {error}
-                    </div>
-                )}
+      if (!res.ok) throw new Error(data.error || "Failed to create facility");
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
+      router.push("/admin/dashboard/facilities");
 
-                    {/* Facility Name */}
-                    <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Facility Name
-                        </label>
-                        <input
-                            type="text"
-                            name="facility_name"
-                            value={form.facility_name}
-                            onChange={handleChange}
-                            placeholder="Meeting Room"
-                            className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                            required
-                        />
-                    </div>
+    } catch (err: any) {
+      setError(err.message);
+    }
+    finally {
+      setLoading(false);
+    }
 
-                    {/* Details */}
-                    <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Details
-                        </label>
-                        <textarea
-                            name="details"
-                            value={form.details}
-                            onChange={handleChange}
-                            placeholder="Projector, whiteboard, 10 seats"
-                            rows={4}
-                            className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                        />
-                    </div>
+  };
 
-                    {/* Resource ID */}
-                    <div>
-                        <label className="block font-medium text-gray-700 mb-1">
-                            Resource ID
-                        </label>
-                        <input
-                            type="number"
-                            name="resource_id"
-                            value={form.resource_id}
-                            onChange={handleChange}
-                            min={1}
-                            className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                            required
-                        />
-                    </div>
+  return (
+    <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
 
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
+      <div className="w-full max-w-2xl bg-white shadow-md rounded-2xl p-8">
 
-                        <Link
-                            href="/admin/dashboard/facilities"
-                            className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition font-medium"
-                        >
-                            Cancel
-                        </Link>
+        <div className="flex justify-between items-center mb-6">
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? "Creating..." : "Create Facility"}
-                        </button>
+          <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+            <PlusCircle className="text-indigo-600" size={28} />
+            Create Facility
+          </h2>
 
-                    </div>
+          <button
+            onClick={() => router.push("/admin/dashboard/facilities")}
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl"
+          >
+            ← Back
+          </button>
 
-                </form>
-            </div>
         </div>
-    );
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Facility Name */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-1">
+              Facility Name
+            </label>
+
+            <input
+              type="text"
+              name="facility_name"
+              value={form.facility_name}
+              onChange={handleChange}
+              placeholder="Meeting Room"
+              required
+              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800"
+            />
+          </div>
+
+          {/* Details */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-1">
+              Details
+            </label>
+
+            <textarea
+              name="details"
+              value={form.details}
+              onChange={handleChange}
+              placeholder="Projector, whiteboard, 10 seats"
+              rows={4}
+              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800"
+            />
+          </div>
+
+          {/* Resource Dropdown */}
+          <div>
+
+            <label className="block font-medium text-gray-700 mb-1">
+              Resource
+            </label>
+
+            <select
+              name="resource_id"
+              value={form.resource_id}
+              onChange={handleChange}
+              required
+              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800"
+            >
+
+              <option value="">Select Resource</option>
+
+              {resources.map((r) => (
+                <option key={r.resource_id} value={r.resource_id}>
+                  {r.resource_name}
+                </option>
+              ))}
+
+            </select>
+
+          </div>
+
+          <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
+
+            <Link
+              href="/admin/dashboard/facilities"
+              className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Cancel
+            </Link>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+            >
+              {loading ? "Creating..." : "Create Facility"}
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  );
 }

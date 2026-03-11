@@ -4,6 +4,43 @@ import { updateRoleSchema } from "@/app/schemas/role.schema";
 import { ROLES } from "@/app/lib/roles";
 import { requireAuth } from "@/app/lib/auth";
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await requireAuth(); // Any logged-in user can fetch a role
+
+    const id = Number((await params).id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: "Invalid role ID" },
+        { status: 400 },
+      );
+    }
+
+    const role = await prisma.roles.findUnique({
+      where: {
+        role_id: id,
+      },
+    });
+
+    if (!role) {
+      return new Response("Role not found", { status: 404 });
+    }
+
+    return NextResponse.json(role);
+  } catch (error: unknown) {
+    let message = "Something went wrong while fetching role";
+
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },

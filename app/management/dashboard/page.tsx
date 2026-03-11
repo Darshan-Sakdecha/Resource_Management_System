@@ -9,6 +9,8 @@ export default async function ManagerDashboard() {
   await requireAuth([ROLES.MANAGER]);
 
   // 📊 Manager KPIs
+
+  // Promise.all() takes an array of promises and returns a single promise that:
   const [
     pendingBookings,
     approvedBookings,

@@ -4,10 +4,9 @@ import DeleteButton from "@/app/components/ui/DeleteButton";
 
 export const revalidate = 0;
 
-export default async function CupboardsPage() {
-  const cupboards = await prisma.cupboards.findMany({
-    include: { resources: true },
-    orderBy: { cupboard_name: "asc" },
+export default async function ResourceTypesPage() {
+  const resourceTypes = await prisma.resource_types.findMany({
+    orderBy: { type_name: "asc" },
   });
 
   return (
@@ -17,18 +16,18 @@ export default async function CupboardsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-indigo-800">
-            Cupboards
+            Resource Types
           </h2>
           <p className="text-sm text-indigo-500 mt-1">
-            Manage storage cupboards
+            Manage resource categories
           </p>
         </div>
 
         <Link
-          href="/admin/dashboard/cupboards/create"
+          href="/admin/dashboard/resource-types/create"
           className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all duration-200"
         >
-          + Add Cupboard
+          + Add Resource Type
         </Link>
       </div>
 
@@ -38,54 +37,44 @@ export default async function CupboardsPage() {
           <thead className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
             <tr>
               <th className="p-4 text-left">ID</th>
-              <th className="p-4 text-left">Resource</th>
-              <th className="p-4 text-left">Cupboard Name</th>
-              <th className="p-4 text-left">Total Shelves</th>
+              <th className="p-4 text-left">Type Name</th>
               <th className="p-4 text-left">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {cupboards.length === 0 ? (
+            {resourceTypes.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-gray-500">
-                  No cupboards found
+                <td colSpan={3} className="p-8 text-center text-gray-500">
+                  No resource types found
                 </td>
               </tr>
             ) : (
-              cupboards.map((cupboard, index) => (
+              resourceTypes.map((type, index) => (
                 <tr
-                  key={cupboard.cupboard_id}
+                  key={type.resource_type_id}
                   className={`border-t hover:bg-indigo-50 ${
                     index % 2 === 0 ? "bg-white" : "bg-indigo-50/20"
                   }`}
                 >
-                  <td className="p-4 text-gray-700">{cupboard.cupboard_id}</td>
-
-                  <td className="p-4 text-gray-600">
-                    {cupboard.resources?.resource_name}
-                  </td>
+                  <td className="p-4 text-gray-700">{type.resource_type_id}</td>
 
                   <td className="p-4 font-medium text-gray-800">
-                    {cupboard.cupboard_name}
-                  </td>
-
-                  <td className="p-4 text-gray-600">
-                    {cupboard.total_shelves}
+                    {type.type_name}
                   </td>
 
                   <td className="p-4 flex gap-2">
                     <Link
-                      href={`/admin/dashboard/cupboards/${cupboard.cupboard_id}`}
+                      href={`/admin/dashboard/resource-types/${type.resource_type_id}`}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
                     >
                       Edit
                     </Link>
 
                     <DeleteButton
-                      id={cupboard.cupboard_id}
-                      apiPath="cupboards"
-                      name={cupboard.cupboard_name}
+                      id={type.resource_type_id}
+                      apiPath="resource-types"
+                      name={type.type_name}
                     />
                   </td>
                 </tr>

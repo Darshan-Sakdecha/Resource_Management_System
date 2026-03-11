@@ -5,127 +5,131 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Edit2 } from "lucide-react";
 
-interface Facility {
-    facility_id: number;
-    facility_name: string;
-    details: string | null;
+interface Resource {
     resource_id: number;
-}
-
-interface ApiError {
-    error: string;
+    resource_name: string;
 }
 
 export default function EditFacilityPage() {
+
     const router = useRouter();
     const params = useParams();
     const id = params?.id;
 
+    const [resources, setResources] = useState<Resource[]>([]);
+
     const [form, setForm] = useState({
         facility_name: "",
         details: "",
-        resource_id: "",
+        resource_id: ""
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch facility data
     useEffect(() => {
+
+        const fetchResources = async () => {
+            const res = await fetch("/api/resources");
+            const data = await res.json();
+
+            const resourceList = Array.isArray(data) ? data : data.data || [];
+
+            setResources(resourceList);
+        };
+
+        fetchResources();
+
+    }, []);
+
+    useEffect(() => {
+
         if (!id) return;
 
         const fetchFacility = async () => {
-            try {
-                const res = await fetch(`/api/facilities/${id}`);
-                const data: Facility | ApiError = await res.json();
 
-                if ("error" in data) throw new Error(data.error);
+            const res = await fetch(`/api/facilities/${id}`);
+            const data = await res.json();
 
-                setForm({
-                    facility_name: data.facility_name,
-                    details: data.details ?? "",
-                    resource_id: data.resource_id.toString(),
-                });
-            } catch (err: any) {
-                setError(err.message);
-            }
+            setForm({
+                facility_name: data.facility_name,
+                details: data.details ?? "",
+                resource_id: data.resource_id.toString()
+            });
+
         };
 
         fetchFacility();
+
     }, [id]);
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+
         e.preventDefault();
-        if (!id) return;
 
         setLoading(true);
         setError(null);
 
         try {
+
             const res = await fetch(`/api/facilities/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     facility_name: form.facility_name,
                     details: form.details,
-                    resource_id: Number(form.resource_id),
-                }),
+                    resource_id: Number(form.resource_id)
+                })
             });
 
-            const data: Facility | ApiError = await res.json();
-
-            if (!res.ok) {
-                if ("error" in data) throw new Error(data.error);
-                throw new Error("Failed to update facility");
-            }
+            if (!res.ok) throw new Error("Failed to update facility");
 
             router.push("/admin/dashboard/facilities");
+
         } catch (err: any) {
             setError(err.message);
-        } finally {
+        }
+        finally {
             setLoading(false);
         }
+
     };
 
     return (
         <div className="min-h-screen bg-indigo-50/40 p-6 flex justify-center items-start">
 
-            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-indigo-100 overflow-hidden">
+            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-indigo-100">
 
-                {/* HEADER */}
-                <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6 flex items-center justify-between text-white">
+                <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6 flex justify-between text-white">
 
                     <div className="flex items-center gap-4">
+
                         <div className="bg-white/20 p-3 rounded-xl">
                             <Edit2 size={24} />
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-semibold tracking-wide">
-                                Edit Facility
-                            </h2>
-                            <p className="text-sm text-indigo-100">
-                                Update facility details
-                            </p>
+                            <h2 className="text-xl font-semibold">Edit Facility</h2>
+                            <p className="text-sm text-indigo-100">Update facility details</p>
                         </div>
+
                     </div>
 
                     <Link
                         href="/admin/dashboard/facilities"
-                        className="text-sm text-indigo-100 hover:text-white transition"
+                        className="text-sm text-indigo-100 hover:text-white"
                     >
                         Back
                     </Link>
 
                 </div>
 
-                {/* FORM */}
                 <div className="p-10 space-y-6">
 
                     {error && (
@@ -136,57 +140,49 @@ export default function EditFacilityPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
 
-                        {/* Facility Name */}
-                        <div>
-                            <label className="block text-sm font-medium text-indigo-700 mb-2">
-                                Facility Name
-                            </label>
-                            <input
-                                type="text"
-                                name="facility_name"
-                                value={form.facility_name}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                            />
-                        </div>
+                        <input
+                            type="text"
+                            name="facility_name"
+                            value={form.facility_name}
+                            onChange={handleChange}
+                            required
+                            placeholder="Facility Name"
+                            className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black"
+                        />
 
-                        {/* Details */}
-                        <div>
-                            <label className="block text-sm font-medium text-indigo-700 mb-2">
-                                Details
-                            </label>
-                            <textarea
-                                name="details"
-                                value={form.details}
-                                onChange={handleChange}
-                                rows={4}
-                                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                            />
-                        </div>
+                        <textarea
+                            name="details"
+                            value={form.details}
+                            onChange={handleChange}
+                            rows={4}
+                            placeholder="Facility details"
+                            className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black"
+                        />
 
-                        {/* Resource ID */}
-                        <div>
-                            <label className="block text-sm font-medium text-indigo-700 mb-2">
-                                Resource ID
-                            </label>
-                            <input
-                                type="number"
-                                name="resource_id"
-                                value={form.resource_id}
-                                onChange={handleChange}
-                                min="1"
-                                required
-                                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                            />
-                        </div>
+                        {/* Resource Dropdown */}
+                        <select
+                            name="resource_id"
+                            value={form.resource_id}
+                            onChange={handleChange}
+                            required
+                            className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black"
+                        >
 
-                        {/* Buttons */}
+                            <option value="">Select Resource</option>
+
+                            {resources.map((r) => (
+                                <option key={r.resource_id} value={r.resource_id}>
+                                    {r.resource_name}
+                                </option>
+                            ))}
+
+                        </select>
+
                         <div className="flex justify-end gap-4 pt-4 border-t border-indigo-100">
 
                             <Link
                                 href="/admin/dashboard/facilities"
-                                className="px-6 py-3 rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50 transition font-medium"
+                                className="px-6 py-3 rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                             >
                                 Cancel
                             </Link>
@@ -194,7 +190,7 @@ export default function EditFacilityPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                className="px-8 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"
                             >
                                 {loading ? "Updating..." : "Update Facility"}
                             </button>
@@ -202,6 +198,7 @@ export default function EditFacilityPage() {
                         </div>
 
                     </form>
+
                 </div>
 
             </div>

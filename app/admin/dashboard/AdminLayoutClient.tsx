@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+
 import {
   LayoutDashboard,
   Users,
@@ -10,6 +11,8 @@ import {
   Settings,
   LogOut,
   Home,
+  Archive,
+  Layers,
 } from "lucide-react";
 
 export default function AdminLayoutClient({
@@ -22,7 +25,7 @@ export default function AdminLayoutClient({
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.refresh(); // clear cache
+    router.refresh();
     router.replace("/login");
   };
 
@@ -35,6 +38,13 @@ export default function AdminLayoutClient({
     { label: "Bookings", href: "/admin/dashboard/bookings", icon: Calendar },
     { label: "Roles", href: "/admin/dashboard/roles", icon: Users },
     { label: "Users", href: "/admin/dashboard/users", icon: Users },
+    { label: "Cupboards", href: "/admin/dashboard/cupboards", icon: Layers },
+    { label: "Shelves", href: "/admin/dashboard/shelves", icon: Archive },
+    {
+      label: "Resource Types",
+      href: "/admin/dashboard/resource-types",
+      icon: Settings,
+    },
   ];
 
   return (
@@ -42,6 +52,7 @@ export default function AdminLayoutClient({
       {/* HEADER */}
       <header className="flex items-center justify-between bg-indigo-600 px-6 py-4 text-white shadow">
         <h1 className="text-xl font-bold tracking-wide">Admin Panel</h1>
+
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold hover:bg-indigo-400 transition"
@@ -57,17 +68,20 @@ export default function AdminLayoutClient({
           <nav className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
+
               const isActive =
-                pathname === item.href || pathname.startsWith(item.href + "/");
+                pathname === item.href ||
+                pathname.startsWith(item.href + "/");
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 rounded-lg px-4 py-3 font-medium transition
-                    ${isActive
-                      ? "bg-indigo-100 text-indigo-600"
-                      : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                    ${
+                      isActive
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
                     }`}
                 >
                   <Icon size={18} />

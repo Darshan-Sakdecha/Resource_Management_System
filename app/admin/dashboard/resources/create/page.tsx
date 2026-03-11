@@ -1,13 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Boxes } from "lucide-react";
 
+interface ResourceType {
+  resource_type_id: number;
+  type_name: string;
+}
+
+interface Building {
+  building_id: number;
+  building_name: string;
+}
+
 export default function CreateResourcePage() {
 
   const router = useRouter();
+
+  const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
 
   const [form, setForm] = useState({
     resource_name: "",
@@ -20,15 +33,46 @@ export default function CreateResourcePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* FETCH DROPDOWN DATA */
+
+  useEffect(() => {
+
+    const fetchDropdowns = async () => {
+
+      try {
+
+        const typeRes = await fetch("/api/resource-types");
+        const typeData = await typeRes.json();
+
+        const buildingRes = await fetch("/api/buildings");
+        const buildingData = await buildingRes.json();
+
+        setResourceTypes(
+          Array.isArray(typeData) ? typeData : typeData.data || []
+        );
+
+        setBuildings(
+          Array.isArray(buildingData) ? buildingData : buildingData.data || []
+        );
+
+      } catch {
+        setError("Failed to load dropdown data");
+      }
+
+    };
+
+    fetchDropdowns();
+
+  }, []);
+
   const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: any) => {
-    e.preventDefault();
 
+    e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
 
@@ -45,7 +89,6 @@ export default function CreateResourcePage() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error);
 
       router.push("/admin/dashboard/resources");
@@ -60,17 +103,22 @@ export default function CreateResourcePage() {
   };
 
   return (
-    <div className="min-h-screen bg-indigo-50/40 p-6 flex justify-center items-start">
 
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-indigo-100 overflow-hidden">
+    <div className="min-h-screen bg-indigo-50/40 p-6 flex justify-center">
+
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border">
 
         {/* HEADER */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6 text-white">
+        <div className="bg-indigo-600 text-white px-8 py-6 flex justify-between">
 
-          <h2 className="text-xl font-semibold flex items-center gap-3">
+          <h2 className="flex items-center gap-3">
             <Boxes size={24} />
             Create Resource
           </h2>
+
+          <Link href="/admin/dashboard/resources">
+            Back
+          </Link>
 
         </div>
 
@@ -78,95 +126,86 @@ export default function CreateResourcePage() {
         <div className="p-10 space-y-6">
 
           {error && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
-              {error}
-            </div>
+            <div className="text-red-600">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            <div>
-              <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Resource Name
-              </label>
-              <input
-                name="resource_name"
-                value={form.resource_name}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+            {/* RESOURCE NAME */}
+            <input
+              name="resource_name"
+              value={form.resource_name}
+              onChange={handleChange}
+              placeholder="Resource Name"
+              className="w-full border rounded-xl px-5 py-3 text-black"
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Resource Type ID
-              </label>
-              <input
-                type="number"
-                name="resource_type_id"
-                value={form.resource_type_id}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+            {/* RESOURCE TYPE DROPDOWN */}
+            <select
+              name="resource_type_id"
+              value={form.resource_type_id}
+              onChange={handleChange}
+              className="w-full border rounded-xl px-5 py-3 text-black"
+            >
 
-            <div>
-              <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Building ID
-              </label>
-              <input
-                type="number"
-                name="building_id"
-                value={form.building_id}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+              <option value="">Select Resource Type</option>
 
-            <div>
-              <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Floor Number
-              </label>
-              <input
-                type="number"
-                name="floor_number"
-                value={form.floor_number}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+              {resourceTypes.map((rt) => (
+                <option key={rt.resource_type_id} value={rt.resource_type_id}>
+                  {rt.type_name}
+                </option>
+              ))}
 
-            <div>
-              <label className="block text-sm font-medium text-indigo-700 mb-2">
-                Description
-              </label>
-              <textarea
-                rows={4}
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                className="w-full px-5 py-3 rounded-xl border border-indigo-200 text-black focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+            </select>
 
-            {/* BUTTONS */}
-            <div className="flex justify-end gap-4 pt-4 border-t border-indigo-100">
+            {/* BUILDING DROPDOWN */}
+            <select
+              name="building_id"
+              value={form.building_id}
+              onChange={handleChange}
+              className="w-full border rounded-xl px-5 py-3 text-black"
+            >
+
+              <option value="">Select Building</option>
+
+              {buildings.map((b) => (
+                <option key={b.building_id} value={b.building_id}>
+                  {b.building_name}
+                </option>
+              ))}
+
+            </select>
+
+            {/* FLOOR */}
+            <input
+              name="floor_number"
+              value={form.floor_number}
+              onChange={handleChange}
+              placeholder="Floor Number"
+              className="w-full border rounded-xl px-5 py-3 text-black"
+            />
+
+            {/* DESCRIPTION */}
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Description"
+              className="w-full border rounded-xl px-5 py-3 text-black"
+            />
+
+            <div className="flex justify-end gap-4">
 
               <Link
                 href="/admin/dashboard/resources"
-                className="px-6 py-3 rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                className="border px-6 py-3 rounded-xl"
               >
                 Cancel
               </Link>
 
               <button
-                type="submit"
                 disabled={loading}
-                className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="bg-indigo-600 text-white px-8 py-3 rounded-xl"
               >
                 {loading ? "Creating..." : "Create Resource"}
               </button>
@@ -180,5 +219,7 @@ export default function CreateResourcePage() {
       </div>
 
     </div>
+
   );
+
 }

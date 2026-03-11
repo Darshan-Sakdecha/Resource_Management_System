@@ -18,6 +18,7 @@ export const updateBookingSchema = z.object({
   user_id: z.number().int().positive(),
   start_datetime: z.string().datetime(),
   end_datetime: z.string().datetime(),
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
 });
 
 export const updateBookingStatusSchema = z.object({

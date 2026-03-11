@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { CalendarPlus } from "lucide-react";
 
 export default function CreateBookingPage() {
 
   const router = useRouter();
+
+  const [resources, setResources] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const [form, setForm] = useState({
     resource_id: "",
@@ -16,130 +17,130 @@ export default function CreateBookingPage() {
     end_datetime: ""
   });
 
-  const handleChange = (e:any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+
+    const fetchData = async () => {
+
+      const r = await fetch("/api/resources");
+      const u = await fetch("/api/users");
+
+      const rData = await r.json();
+      const uData = await u.json();
+
+      setResources(rData.data || []);
+      setUsers(uData.data || []);
+
+    };
+
+    fetchData();
+
+  }, []);
+
+  const handleChange = (e: any) => {
+
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+
   };
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: any) => {
 
     e.preventDefault();
 
-    await fetch("/api/bookings",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json"},
+    await fetch("/api/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        resource_id:Number(form.resource_id),
-        user_id:Number(form.user_id),
-        start_datetime:form.start_datetime,
-        end_datetime:form.end_datetime
+        resource_id: Number(form.resource_id),
+        user_id: Number(form.user_id),
+        start_datetime: form.start_datetime,
+        end_datetime: form.end_datetime
       })
     });
 
     router.push("/admin/dashboard/bookings");
     router.refresh();
+
   };
 
   return (
 
-    <div className="min-h-screen bg-indigo-50/40 p-6">
+    <div className="min-h-screen bg-indigo-50/40 p-6 flex justify-center text-black">
 
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-indigo-100 p-8">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border p-10">
 
-        {/* HEADER */}
-        <div className="flex items-center gap-3 mb-6">
+        <h2 className="text-xl font-bold mb-6 text-black">
+          Create Booking
+        </h2>
 
-          <span className="bg-indigo-100 p-2 rounded-xl">
-            <CalendarPlus className="text-indigo-600"/>
-          </span>
-
-          <h2 className="text-2xl font-bold text-indigo-800">
-            Create Booking
-          </h2>
-
-        </div>
-
-        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-5">
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Resource ID
-            </label>
+          <select
+            name="resource_id"
+            value={form.resource_id}
+            onChange={handleChange}
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          >
 
-            <input
-              name="resource_id"
-              placeholder="Enter Resource ID"
-              value={form.resource_id}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded-lg text-gray-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-            />
-          </div>
+            <option value="">Select Resource</option>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              User ID
-            </label>
+            {resources.map((r: any) => (
+              <option key={r.resource_id} value={r.resource_id}>
+                {r.resource_name}
+              </option>
+            ))}
 
-            <input
-              name="user_id"
-              placeholder="Enter User ID"
-              value={form.user_id}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded-lg text-gray-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-            />
-          </div>
+          </select>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Time
-            </label>
+          <select
+            name="user_id"
+            value={form.user_id}
+            onChange={handleChange}
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          >
 
-            <input
-              type="datetime-local"
-              name="start_datetime"
-              value={form.start_datetime}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded-lg text-gray-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-            />
-          </div>
+            <option value="">Select User</option>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Time
-            </label>
+            {users.map((u: any) => (
+              <option key={u.user_id} value={u.user_id}>
+                {u.name}
+              </option>
+            ))}
 
-            <input
-              type="datetime-local"
-              name="end_datetime"
-              value={form.end_datetime}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded-lg text-gray-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-            />
-          </div>
+          </select>
 
-          {/* BUTTONS */}
-          <div className="flex gap-4 pt-4">
+          <input
+            type="datetime-local"
+            name="start_datetime"
+            value={form.start_datetime}
+            onChange={handleChange}
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          />
 
-            <Link
-              href="/admin/dashboard/bookings"
-              className="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
-            >
-              Cancel
-            </Link>
+          <input
+            type="datetime-local"
+            name="end_datetime"
+            value={form.end_datetime}
+            onChange={handleChange}
+            className="w-full border rounded-xl px-5 py-3 text-black"
+          />
 
-            <button
-              type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700"
-            >
-              Create Booking
-            </button>
-
-          </div>
+          <button
+            type="submit"
+            className="bg-indigo-600 text-white px-8 py-3 rounded-xl"
+          >
+            Create Booking
+          </button>
 
         </form>
 
       </div>
 
     </div>
+
   );
 }
