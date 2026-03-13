@@ -40,13 +40,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = signToken({
-      userId: user.user_id,
-      role,
-    });
+    // ✅ Only store userId — role is fetched fresh from DB each time
+    const token = signToken({ userId: user.user_id });
 
     const response = NextResponse.json({
       message: "Login successful",
+      role, // ✅ send role in response for client-side redirect
     });
 
     response.cookies.set("token", token, {
@@ -54,16 +53,15 @@ export async function POST(req: Request) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7, // ✅ 7 days in seconds
     });
 
     return response;
   } catch (error: unknown) {
     let message = "Login failed";
-
     if (error instanceof Error) {
       message = error.message;
     }
-
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

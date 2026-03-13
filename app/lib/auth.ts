@@ -45,6 +45,13 @@ export async function requireAuth(allowedRoles?: Role[]): Promise<AuthUser> {
     throw new Error("UNAUTHORIZED");
   }
 
+  // ✅ Add this temporarily
+  console.log("==================");
+  console.log("User role:", JSON.stringify(user.role));
+  console.log("Allowed roles:", JSON.stringify(allowedRoles));
+  console.log("Includes check:", allowedRoles?.includes(user.role));
+  console.log("==================");
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     throw new Error("FORBIDDEN");
   }
